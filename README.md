@@ -79,6 +79,7 @@ for (let movie of movies) {
 }
 ```
 
+## Functions
 ### Function Parameter Types
 In TypeScript, we can specify the type of function parameters in a function declaration. Each parameter can have its own type.
 
@@ -205,7 +206,7 @@ This lets us make out code more readable and even reuse the types elsewhere.
 type Person = {
 	name: string;
 	age: number;
-}
+};
 
 const sayHappyBirthday = (person: Person) => {
 	return `Hey ${person.name}, congrats on turning ${person.age}!`;
@@ -213,3 +214,129 @@ const sayHappyBirthday = (person: Person) => {
 
 sayHappyBirthday({ name: "Jerry", age: 42 });
 ```
+
+### Nested Objects
+Nested objects are annotated with the exact same syntax as other objetcs.
+
+```ts
+type Song = {
+	title: string;
+	artist: string;
+	numStreams: number; 
+	credits: { producer: string, writer: string };
+};
+
+function calculateRoyalties(song: Song): number {
+	return song.numStreams * 0.0033
+}
+
+const describePerson = (person: {
+												name: string;
+												age: number;
+												parentNames: {
+													mom: string;
+													dad: string;
+												}
+}) => {
+	return `Person: ${name},
+	Age: ${age},
+	parents: ${parentNames.mom}, ${parentNames.dad}.`;
+}
+
+describePerson({name: "Jimmy", age: 10, parents: { mom: "Kim", dada: "Steve" }})
+```
+
+### Optional Properties
+Object properties can be marked as optional with `?`.
+
+```ts
+type Point = {
+	x: number;
+	y: number;
+	z?: number;
+};
+
+const myPoint: Point = { x: 1, y: 2, z: 3 };
+const myOtherPoint: Point = { x: 1, y: 2 };
+```
+
+### readonly Modifier
+`readonly` lets us mark certain properties in an object, array or class as read only.
+
+```ts
+type User = {
+	readonly id: number;
+	username: string;
+};
+
+const user: User = {
+	id: 12387,
+	username: "catgurl"
+};
+
+user.id = 23578 // Error
+```
+
+### Intersection Types
+You can combine multiple types with `&`. You can also add additional properties to intersection types.
+
+```ts
+type Circle = {
+	radius: number;
+}
+
+type Colorful = {
+	color: string;
+}
+
+type ColorfulCircle = Circle & Colorful;
+
+const happyFace: ColorfulCircle = {
+	radius: 4,
+	color: "yellow"
+};
+
+type Cat = {
+	numLives: number;
+};
+
+type Dog = {
+	breed: string;
+};
+
+type CatDog = Cat & Dog & {
+	age: number;
+};
+```
+
+## Array Types
+Arrays can be typed using a type annotation followed by empty brackets, like `number[]` for an array of numbers, or alternatively `Array<number>`. You can use this with arrays of custom types as well as primitives.
+
+These arrays only allow data of that one type inside them.
+
+```ts
+const users = [] // any
+const activeUsers: [] = [] // always empty array
+
+let names: string[] = ["Big Bird", "Oscar"];
+let ages: number[] = [24, 32, 19, 29];
+
+let names: Array<string> = ["Big Bird", "Oscar"];
+let ages: Array<number> = [24, 32, 19, 29];
+
+type Point {
+	x: number;
+	y: number;
+}
+
+const coords: Point[] = []
+```
+
+Nested arrays are annotated differently.
+
+```ts
+const board: string[][] = [["X", "O", "X"],["X", "O", "X"],["X", "O", "X"]];
+
+const demo: number[][][] = [[[1]]];
+```
+
