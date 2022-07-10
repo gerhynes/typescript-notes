@@ -332,7 +332,7 @@ type Point {
 const coords: Point[] = []
 ```
 
-Nested arrays are annotated differently.
+Nested arrays are annotated differently depending on how deeply nested they are.
 
 ```ts
 const board: string[][] = [["X", "O", "X"],["X", "O", "X"],["X", "O", "X"]];
@@ -340,3 +340,95 @@ const board: string[][] = [["X", "O", "X"],["X", "O", "X"],["X", "O", "X"]];
 const demo: number[][][] = [[[1]]];
 ```
 
+## Union Types
+Union types let us give a value a few different possible types. If the eventual value's type is included, TypeScript will be happy. This is useful if we don't know the type at runtime.
+
+We can create a union type using `|` to separate the types we want to include.
+
+```ts
+let age: number | string = 21;
+
+const guessAge(age: number | string): string => {
+	return "Your age is " + age;
+}
+
+type Point = {
+	x: number;
+	y: number;
+}
+
+type Location = {
+	lat: number;
+	long: number;
+}
+
+let coordinates: Point | Location = { x: 1, y: 34 };
+coordinates = { lat: 21.213, long: 23.334 };
+```
+
+### Type Narrowing with Union Types
+Sometimes we'll have a function that had a union type as a parameter and has an internal operation that only works with one of the types. TypeScript will complain if one of the parameter's types could cause a issue.
+
+Type narrowing is simply doing a type check before working with a value. If our value is a string, we may want to use it differently than if we got a number.
+
+Since unions allow for multiple types for a value, it's good to check what came through before working with it.
+
+```ts
+function calculateTotal(price: number | string, tax: number): number {
+	if(typeof price === string) {
+		price = parseFloat(price.replace("$", ""));
+	} 
+	return price;
+}
+```
+
+### Union Types and Arrays
+You can use union types with arrays that contain multiple different types. Do not confuse this with a union type of two different arrays.
+
+```ts
+const coords: (Point | Location)[] = [];
+
+// array of numbers or strings 
+const stuff: (number | string)[] = [1,2,3, "das"];
+
+// array of numbers or array of strings, not both
+const otherStuff: number[] | string[] = [1,2,3];
+```
+
+### Literal Types
+Literal types are not just types but the literal values themselves too.
+
+```ts
+// must literally equal 0
+let zero: 0 = 0;
+
+// literally the string "hi"
+let hi: "hi" = "hi";
+```
+
+They can be combined with union types to create fine-tuned options for TypeScript to enforce. For example, you can assert that a variable must be one of a small number of literal values.
+
+```ts
+let mood: "Happy" | "Sad" = "Happy"; 
+
+const giveAnswer = (answer: "yes" | "no" | "maybe") => {
+	return `The answer is ${answer}.`;
+}
+
+giveAnswer("no")
+
+giveAnswer("I'm not sure") // Error
+```
+
+## Tuples and Enums
+Tuples are a special type exclusive to TypeScript (they don't exist in JavaScript).
+
+Tuples are arrays of fixed length and ordered with specific types - like super rigid arrays.
+
+```ts
+let myTuple: [number, string];
+
+myTuple = [10, "Typescript is fun"]
+
+myTuple = ["TypeScript is fun, 10"] // Error
+```
