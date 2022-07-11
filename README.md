@@ -260,7 +260,7 @@ const myPoint: Point = { x: 1, y: 2, z: 3 };
 const myOtherPoint: Point = { x: 1, y: 2 };
 ```
 
-### readonly Modifier
+### `readonly` Modifier
 `readonly` lets us mark certain properties in an object, array or class as read only.
 
 ```ts
@@ -421,14 +421,120 @@ giveAnswer("I'm not sure") // Error
 ```
 
 ## Tuples and Enums
-Tuples are a special type exclusive to TypeScript (they don't exist in JavaScript).
+Tuples are a special type exclusive to TypeScript (they don't exist in JavaScript) for storing simple data that is intrinsically linked.
 
 Tuples are arrays of fixed length and ordered with specific types - like super rigid arrays.
 
+Weirdly, the way tuples have been designed doesn't actually prevent you from pushing on extra elements after their creation.
+
 ```ts
+const color: [number, number, number] = [255, 0, 45];
+
 let myTuple: [number, string];
 
 myTuple = [10, "Typescript is fun"]
 
 myTuple = ["TypeScript is fun, 10"] // Error
+
+type HTTPResponse = [number, string];
+
+const responses: HTTPResponse[] = []; // array of tuples
+
+const goodRes: HTTPResponse = [200, "OK"];
+
+goodRes[0] // 200
+
+goodRes.push(123) // this works
+goodRes.pop() // so does this
+```
+
+### Enums
+Enums let us define a set of named constants. We can give these constants numeric or string values.
+
+The constants don't need to be capitalized but often are by convention.
+
+The constants don't all need to be of the same type, but usually are.
+
+If you don't assign a value to the constants, they are assigned a number starting at 0. If you assign a number value to the first constant, the rest will increment from there.
+
+```ts
+enum Responses {
+	no, // 0
+	yes, // 1
+	maybe // 2
+}
+
+enum Responses {
+	no = "No",
+	yes = "Yes",
+	maybe = "Maybe"
+}
+
+enum Directions {
+	UP = "up",
+	DOWN = "down",
+	LEFT = "left",
+	RIGHT = "right"
+}
+
+enum OrderStatus {
+	PENDING,
+	SHIPPED,
+	DELIVERED,
+	RETURNED
+}
+
+const currentStatus = OrderStatus.DELIVERED;
+
+function isDelivered(status: OrderStatus): boolean {
+	return status === OrderStatus.DELIVERED
+};
+
+isDelivered(OrderStatus.SHIPPED); // false
+```
+
+When TypeScript containing enums is converted to JavaScript, an enum becomes a JavaScript object wrapped in an immediately invoked function expression.
+
+```ts
+// TypeScript
+enum OrderStatus {
+	PENDING,
+	SHIPPED,
+	DELIVERED,
+	RETURNED
+}
+
+// JavaScript
+"use strict";
+var OrderStatus;
+(function (OrderStatus) {    
+	OrderStatus[OrderStatus["PENDING"] = 0] = "PENDING";   
+	OrderStatus[OrderStatus["SHIPPED"] = 1] = "SHIPPED";   
+	OrderStatus[OrderStatus["DELIVERED"] = 2] = "DELIVERED";    
+	OrderStatus[OrderStatus["RETURNED"] = 3] = "RETURNED";
+})(OrderStatus || (OrderStatus = {}));
+```
+
+Alternatively we can use a `const enum` which erases the enum and replaces every referenced value with the underlying value.
+
+```ts
+// TypeScript
+const enum OrderStatus {
+    PENDING,
+    SHIPPED,
+    DELIVERED,
+    RETURNED,
+}
+
+const order = {
+    orderNumber: 20935813,
+    status: OrderStatus.PENDING
+}
+
+// JavaScript
+"use strict";
+const order = {
+	orderNumber: 20935813,
+	status: 0 /* OrderStatus.PENDING */
+};
 ```
