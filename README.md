@@ -538,3 +538,599 @@ const order = {
 	status: 0 /* OrderStatus.PENDING */
 };
 ```
+
+## Interfaces
+Interfaces serve almost the exact same purpose as type aliases (with a slightly different syntax).
+
+We can use them to create reusable, modular types that describe the shapes of objects.
+
+```ts
+interface Person {
+	name: string;
+	age: number;
+}
+
+const sayHappyBirthday = (person: Person) => {
+	return `Hey ${person.name}, congrats on turning ${person.age}`
+}
+
+sayHappyBirthday({ name: "Jerry", age: 42 });
+```
+
+### Readonly and Optional Interface Properties
+We can mark inteface properties as optional using `?`. Readonly properties can also be set.
+
+```ts
+interface Person {
+	readonly id: number;
+	first: string;
+	last: string;
+	nickname?: string; // optional
+}
+```
+
+### Interface Methods
+We can also describe what methods are included on an object, and their parameters and return types.
+
+The parameter name doesn't matter.
+
+```ts
+interface Person {
+	readonly id: number;
+	first: string;
+	last: string;
+	nickname?: string;
+	sayHi: () => string;
+	sayHello(): string;
+}
+
+interface Product {
+	name: string;
+	price: number;
+	applyDiscount(discount: number): number;
+}
+
+const shoes: Product = {
+	name: "Blue Suede Shoes"
+	price: 100,
+	applyDiscount(amount: number) {
+		return this.price * (1 - amount);
+	}
+}
+```
+
+### Reopening Interfaces
+We can add new properties to interfaces after we have already described them. This extends, rather than overwrites, the initial interface.
+
+```
+interface Person {
+	name: string;
+}
+
+interface Person {
+	age: number;
+}
+
+const person:Person = {
+	name: "Jerry",
+	age: 42
+}
+```
+
+### Extending Interfaces
+Similar to how in OOP a class can inherit functionality from a parent class, you can extend an interface.
+
+The new interface inherits all of the type rules from the original interface.
+
+```ts
+interface Dog {
+	name: string;
+	age: number;
+	breed: string;
+	bark(): string;
+}
+
+interface ServiceDog extends Dog {
+	job: "drug sniffer" | "bomb sniffer" | "guide dog";
+}
+
+const chewie: ServiceDog = {
+	name: "Chewie",
+	age: 4.5,
+	breed: "Lab",
+	bark() {
+		return "Bark!"
+	},
+	job: "guide dog"
+}
+```
+
+You can extend multiple interfaces.
+
+```ts
+interface Person {
+	name: string;
+}
+
+interface Employee {
+	readonly id: number;
+	email: string;
+}
+
+interface Engineer extends Person, Employee {
+	level: string;
+	languages: string[];
+}
+
+const Pierre: Engineer = {
+	name: "Pierre",
+	id: 12345,
+	email: "pierrel@example.com",
+	level: "senior",
+	languages: ["JavaScript", "Python"]
+}
+```
+
+### Interfaces vs Type Aliases
+Interfaces can only describe the shape of an object, while type aliases can describe any sort of type, such as literals, union types, etc.
+
+We can reopen interfaces, where TypeScript would complain if you duplicated type aliases.
+
+Interfaces can extend other interfaces. To do something similar for type aliases, we would need to use an intersection type.
+
+## The TypeScript Compiler
+Running `tsc --init` will create a `tsconfig.json` file for your TypeScript config. 
+
+You can pass the `-w` or `--watch` flag to the `tsc` command to tell TypeScript to recompile on file changes.
+
+```
+tsc -w index.ts
+```
+
+Using `tsc` on its own will compile all TypeScript files in the folder in which it was run.
+
+
+
+You can tell TypeScript to only compile certain files using the `files` option in `tsconfig.json`. **Note:** This is a top-level option, not part of the `compilerOptions`.
+
+```json
+{    
+	"compilerOptions": {},    
+	"files": [      
+		"core.ts",      
+		"sys.ts",      
+		"types.ts",      
+		"scanner.ts",      
+		"parser.ts",      
+		"utilities.ts",     
+		"binder.ts",      
+		"checker.ts",      
+		"tsc.ts"    
+	]  
+}
+```
+
+### `include` and `exclude`
+
+Two more options to tell TypeScript which files to comile and which to ignore are `include` and `exclude`. They let you include/exclude specific files, directories and patterns. Any filenames are resolved relatively to the directory containing `tsconfig.json` (which should be in the root of your project).
+
+`include` defaults to `**`, or everything. `exclude` defaults to `node_modules`
+
+```json
+{
+	"include": ["src/**/**, tests/**/**"]
+	"exclude": ["node_modules", "dontTouch.ts"]
+}
+```
+
+### `outDir`
+The `outDir` option lets us specify which directory the compiled JavaScript files should be emitted to. The original directory structure is maintained.
+
+```json
+"outDir": "./dist"
+```
+
+### `target`
+The `target` option controls the JavaScript version that TypeScript compiles to.
+
+```json
+"target": "es2015"
+```
+
+### `strict`
+Setting the `strict` option to `true` enables a nuber of additional type checks, such as `noImplicitAny`, and `strictNullChecks`.
+
+## Working with the DOM
+TypeScript automatically knows all the type definitions for the document object, `document: Document`. All of the document's properties and methods are defined and typed, such as `URL: string` or `getElementById(id: string): HTMLElement | null`, and the same is the case for all the elements.
+
+### The Lib Compiler Option
+TypeScript includes a default set of type definitions for built-in JavaScript APIs, such as `Math`, as well as things found in browser environments, such as `document`.
+
+You can use the `lib` option to change this set, such as not including the DOM if building something purely server-side.
+
+```json
+	"lib": ["ES2021"]
+```
+
+### Non-Null Assertion Operator
+The non-null assertion operator, a `!` after the expression, tells TypeScript that an expression is guaranteed not to be null. Only use this in situations where you are certain, since you are giving up null checks.
+
+```ts
+const btn = document.getElementbyId("btn")!; // type is HTMLElement
+```
+
+### Type Assertions
+Sometimes you might have more specific information about a value's type, and you want to make sure typeScript knows it too.
+
+You can assert a value's type by using the `as` keyword, followed by the specific type you want to assert.
+
+There is an alternative syntax using angle brackets, though it is less common as it causes issues with JSX.
+
+```ts
+const myPic = document.querySelector(".profile-image"); // inferred HTMLElement
+
+const myPic = document.querySelector(".profile-image") as HTMLImageElement;
+
+<HTMLImageElement>myPic // alternate syntax
+```
+
+### Working with Events
+If you're adding a callback function directly to an event handler, TypeScript can infer what type of event is happening, for example a `SubmitEvent` with a form.
+
+If the callback function is defined separately, TypeScript doesn't have the context to know what type the event is.
+
+```ts
+// infers that e is SubmitEvent
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+  console.log("submitted");
+});
+
+// need to specify type of event
+function handleSubmit(e: SubmitEvent) {
+  e.preventDefault();
+  console.log("submitted");
+}
+```
+
+## JavaScript Classes
+Classes are templates for creating objects in JavaScript. Thye contain a few important pieces which allow for the creation and extension of customized (and nicely organized) objects.
+
+```js
+class Person {
+	constructor(name, age) {
+		this.name = name;
+		this.age = age;
+	}
+	greet() {
+		return `Hello ${this.name}!`;
+	}
+}
+
+const jimmy = new Person("Jimmy", 25);
+jimmy.greet(); // Hello Jimmy!
+```
+
+### Constructors
+The constructor method is automatically called every time we instantiate a new instance of a class. Its arguments lets you store properties on a specific instance of the class.
+
+### Class Fields
+Class fields are a shortcut syntax to define fields or properties on a class instad of having to do it in the constructor. They are limited in that they only allow for hard-coded values.
+
+```js
+class Player {
+	score = 0;
+	numLives = 10;
+	constructor(name, age) {
+		this.name = name;
+		this.age = age;
+	}
+}
+```
+
+### Private Fields
+Private fields let you specify that certain properties should only be accessible inside the class.
+
+```js
+class Player {
+	#score = 0;
+	#numLives = 10;
+	constructor(name, age) {
+		this.name = name;
+		this.age = age;
+	}
+	getScore(){
+		return this.#score;
+	}
+	setScore(newScore){
+		this.#score = newScore;
+	}
+	#secretMethod() {
+		console.log("SECRET!!")
+	}
+}
+```
+
+### Getters and Setters
+Getters and setters let us write something that we call as if it's a property that then runs some corresponding logic as if it was a method.
+
+```js
+class Player {
+	#score = 0;
+	#numLives = 10;
+	constructor(first, last) {
+		this.first = first;
+		this.last = last;
+	}
+	get fullName() {
+		return `${this.first} ${this.last}`;	
+	}
+	get score(){
+		return this.#score;
+	}
+	set score(newScore){
+		if(newScore < 0){
+			throw new Error("Score must be positive");
+		}
+		this.#score = newScore;
+	}
+}
+
+const player1 = new Player("Blue", "Steele");
+player1.fullName; // Blue Steele
+player1.score; // 0
+player1.score = 50;
+```
+
+### Static Properties and Methods
+The `static` keyword on a property or method tells JavaScript that the property/method exists on the class itself, not each individual instance. 
+
+It lets you group functionality with the class that doesn't have anything to do with a particular instance, but has to do with the class itself, often some creation/helper method.
+
+```js
+class Player {
+	static description = "Player in the game"
+	
+	constructor(first, last) {
+		this.first = first;
+		this.last = last;
+	}
+	static randomPlayer() {
+		return new Player("Andy Samberg")
+	}
+}
+
+Player.description;
+Player.randomPlayer();
+```
+
+### Inheritance
+In JavaScript a class can inherit shared functionality from a parent class. 
+
+```js
+class Player {...}
+
+class SuperPlayer extends Player {...}
+
+```
+
+### `super`
+The `super` keyword lets you call the constructor method from a parent class.
+
+```js
+class Player {
+	constructor(first, last) {
+		this.first = first;
+		this.last = last;
+	}
+}
+
+class AdminPlayer extends Player {
+	constructor(powers) {
+		super();
+		this.powers = powers;
+	}
+	isAdmin = true;
+}
+
+const admin = new AdminPlayer("admin", "McAdmin", ["delete", "restore"])
+```
+
+## TypeScript Classes
+With TypeScript, you need to define and type fields that come from constructor arguments.
+
+```ts
+class Player {
+	first: string;
+	last: string;
+	
+	constructor(first: string, last: string) {
+		this.first = first;
+		this.last = last;
+	}
+}
+```
+
+### Class Fields
+TypeScript can infer the type of class fields, though you can also type them.
+
+```ts
+class Player {
+	first: string;
+	last: string;
+	score = 0;
+	
+	constructor(first: string, last: string) {
+		this.first = first;
+		this.last = last;
+	}
+} 
+```
+
+### `readonly` Class Properties
+Classes in TypeScript can use the `readonly` modifier so fields can't be updated once they're set.
+
+```ts
+class Player {
+	readonly first: string;
+	readonly last: string;
+	score = 0;
+	
+	constructor(first: string, last: string) {
+		this.first = first;
+		this.last = last;
+	}
+} 
+```
+
+### `public` and `private` Modifiers
+TypeScript adds `public` and `private` modifiers. In JavaScript, every property in a class is public by default. `private` properties and methods are only accessible inside the class.
+
+```ts
+class Player {
+	public first: string;
+	public last: string;
+	public score: number = 0;
+	private numLives: number = 10;
+	
+	constructor(first: string, last: string) {
+		this.first = first;
+		this.last = last;
+	}
+
+	private secretMethod(): void {
+		console.log("Secret")
+	}
+} 
+```
+
+### Parameter Properties Shortcut
+There is a shorter syntax for defining constructor parameter properties.
+
+```ts
+class Player {
+	public score: number = 0;
+	
+	constructor(public first: string, public last: string) {}
+} 
+
+const elton = new Player("Elton", "John");
+```
+
+### Getters and Setters
+By default, TypeScript makes getters readonly. TypeScript doesn't want return type annotations for setters.
+
+```ts
+class Player {	
+	constructor(
+	public first: string, 
+	public last: string, 
+	private _score: number
+	) {}
+
+	get fullName(): string {
+		return `${this.first} ${this.last}`
+	}
+
+	get score():number {
+		return this._score;
+	}
+
+	set score(newScore: number) {
+		if (newScore < 0) {
+			throw new Error("Score can't be negative");
+		}
+		this._score = newScore;
+	}
+} 
+
+const elton = new Player("Elton", "John", 0);
+elton.fullName;
+elton.score;
+elton.score(99);
+```
+
+### `protected`
+`private` fields are only accessible in their specific class. `protected` fields are also accessible in child classes.
+
+```ts
+class Player {	
+	constructor(
+	public first: string, 
+	public last: string, 
+	protected _score: number
+	) {}
+} 
+
+class SuperPlayer extends Player {
+	public isAdmin: boolean = true;
+	maxScore(){
+		this._score = 999999;
+	}
+}
+```
+
+### Classes and Interfaces
+Interfaces can describe the shape of a class.
+
+```ts
+interface Colorful {
+	color: string;
+}
+
+interface Printable {
+	print(): void;
+}
+
+class Bike implements Colorful {
+	constructor(public color: string) {}
+}
+
+class jacket implements Colorful, Printable {
+	constructor(public brand: string, public color: string) {}
+	print() {
+		console.log(`${this.color} ${this.brand} jacket`)
+	}
+}
+
+const bike1 = new Bike("red");
+const jacket1 = new Jacket("Patagonia", "blue");
+```
+
+### Creating Abstract Classes
+Abstract classes define abstract methods that must be implemented by a child class. Child classes also inherit any non-abstract methods.
+ 
+Abstract classes cannot be instantiated directly. You can extend an abstract class and implement an interface at the same time.
+
+```ts
+abstract class Employee {
+	constructor(public first: string, public last: string){}
+	abstract getPay(): number;
+	printDetails(): void {
+		console.log(`${this.first} ${this.last}`);
+	}
+}
+
+class FullTimeEmployee extends Employee {
+	constructor(
+		public first: string, 
+		public last: string, 
+		private salary: number
+	){}
+	getPay(){
+		return this.salary;
+	}
+}
+
+class PartTimeEmployee extends Employee {
+	constructor(
+		public first: string, 
+		public last: string, 
+		private hourlyRate: number, 
+		private hoursWorked: number
+	){}
+	getPay(){
+		return this.hourlyRate * this.hoursWorked
+	}
+}
+```
