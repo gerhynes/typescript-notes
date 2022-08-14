@@ -12,7 +12,7 @@ TypeScript's type system
 
 After TypeScript has checked our code, it's compiled to regular JavaScript that can run in a browser or Node.js.
 
-The easiest way to install TypeScript is via npm with `npm i -g typescript`, whcih gives you access to the `tsc` command anywhere in your terminal.
+The easiest way to install TypeScript is via npm with `npm i -g typescript`, which gives you access to the `tsc` command anywhere in your terminal.
 
 The [TypeScript Playground](https://www.typescriptlang.org/play) is a browser-based environment where you can try out TypeScript and learn about it's features.
 
@@ -1134,3 +1134,514 @@ class PartTimeEmployee extends Employee {
 	}
 }
 ```
+
+## Generics
+Generics let us define reusable functions and classes that work with multiple types rather than a single type.
+
+```ts
+function identity<T>(item: T): T {
+	return item;
+}
+
+identity<number>(42);
+
+function getRandomElement<T>(list: T[]): T {
+	const randIdx = Math.floor(Math.random() * list.length);
+	return list[randIdx];
+}
+
+getRandomElement<number>([5, 33, 29, 87]);
+
+document.querySelector("#username") // Element
+document.querySelector<HTMLInputElement>("#username") // HTMLInputElement
+```
+
+In many cases, TypeScript can infer generic type parameters.
+
+```ts
+getRandomElement<string>(["a", "b", "c"]);
+getRandomElement(["a", "b", "c"]); // also valid
+```
+
+A quirk of generics is that in `.tsx` files you need to add a trailing comma to arrow functions so that TypeScript doesn't confuse generics with JSX tags.
+
+```ts
+const getRandomElement = <T,>(list: T[]): T => {
+	const randIdx = Math.floor(Math.random() * list.length);
+	return list[randIdx];
+}
+```
+
+Generic functions can have more than one type parameter.
+
+```ts
+function merge<T, U>(object1: T, object2: U) {
+	return {
+		...object1,
+		...object2
+	};
+}
+
+const comboObj = merge({name: "Colt"}, {pets: ["blue", "elton"]});
+```
+
+With generics, you can constrain the possible types for type parameters.
+
+```ts
+function merge<T extends object, U extends object>(object1: T, object2: U) {
+	return {
+		...object1,
+		...object2
+	};
+}
+
+interface Lengthy {
+	length: number;
+}
+
+function printLength<T extends Lengthy>(thing: T): void {
+	console.log(thing.length);
+}
+```
+
+You can also set a default type for type parameters.
+
+```ts
+function makeEmptyArray<T = number>(): T[] {
+	return [];
+}
+
+const nums = makeEmptyArray(); // defaults to type number
+const bools = makeEmptyArray<boolean>(); // still works
+```
+
+TypeScript also supports generic classes.
+
+```ts
+interface Song {
+	title: string;
+	artist: string;
+}
+
+interface Video {
+	title: string;
+	creator: string;
+	resolution: string;
+}
+
+class Playlist<T> {
+	public queue: T[] = [];
+	add(el: T){
+		this.queue.push(el);	
+	}
+}
+
+const songs = new Playlist<Song>();
+const videos = new Playlist<Video>();
+```
+
+## Type Narrowing
+### `typeof` Guards
+Type narrowing refers to reducing a less-precise type to a more-precise type.
+
+The easiest way to do this is to use a typeof guard. This involves doing a type check before working with a value.
+
+Since unions allow multiple types for a value, we can first check what came through before working with it.
+
+```TS
+count isTeenager = (age: number | string) => {
+	if(typeof age == "string") {
+		console.log(age.charAt(0) === 1);
+	}
+	if(typeof age == "number") {
+		console.log(age > 12 && age < 20);
+	}
+}
+
+isTeenager("20"); // false
+isTeenager(13); // true
+```
+
+This works well with primitives but less well with reference types.
+
+### Truthiness Guards
+Truthiness type guards involve checking a value for being truthy or falsy before working with it.
+
+This is helpful in avoiding errors when values might be null or undefined.
+
+```TS
+const printLetters = (word: string | null) =>{
+	if(!word) {
+		console.log("No word was provided");
+	} else {
+		name.forEach(letter => console.log(letter));
+	}
+}
+```
+
+### Equality Narrowing
+Equality type guards involve comparing types to each other before doing certain operations with values.
+
+By checking two values against one another, we can be sure they're both the same before working with them in a type-specific way.
+
+```TS
+const someFunc = (x: string | boolean, y: string | number) => {
+	if (x === y) {
+		x.toUpperCase();
+		y.toUpperCase();
+	} else {
+		console.log(x);
+		console.log(y);
+	}
+}
+```
+
+### `in` Operator Narrowing
+JavaScript's `in` operator helps check if a certain property exists in an object.
+
+This means we can use it to check if a value exists in an object, according to its type alias or aliases, before working with it.
+
+```TS
+type Cat = { meow: () => void };
+type Dog = { bark: () => void };
+
+const talk = { create: Cat | Dog } => {
+	if ("meow" in creature) {
+		console.log(creature.meow());
+	} else {
+		console.log(creature.bark());
+	}
+}
+
+const kitty: Cat = { meow: () => "Meowwww" };
+talk(kitty); // Meowwww
+```
+
+### `instanceof` Narrowing
+`instanceof` is a JavaScript operator that allows us to check if one thing is an instance of another, that is if it exists on the prototype chain.
+
+This can help narrow types when working with things that exist in JavaScript like classes, arrays and dates.
+
+```TS
+const printFullDate(date: Date | string) {
+	if (date instanceof Date) {
+		return date.toUTCString();
+	} else {
+		return new Date(string).toUTCString();
+	}
+}
+```
+
+### Type Predicates
+TypeScript allows us to write custom functions that can narrow the type of a value. These functions have a special return type called a type predicate.
+
+A type predicate takes the form `PARAMETER_NAME is TYPE`.
+
+```TS
+const isCat(pet: Cat | Dog): pet is Dog {
+	return (pet as Dog).bark !== undefined;
+}
+
+let pet = getAnimal();
+
+if (isCat(pet)) {
+	pet.meow();
+} else {
+	pet.bark();
+}
+```
+
+### Discriminated Unions
+A common pattern in TypeScript involves creating a literal property that is common across multiple types. We can then narrow the type using that literal pattern.
+
+`kind`, `type`, and `_type` are commonly used.
+
+```TS
+// kind isn't any string, it's the literal string "circle"
+interface Circle {
+	kind: "circle";
+	radius: number;
+}
+
+interface Square {
+	kind: "square";
+	sideLength: number;
+}
+
+type Shape = Circle | Square;
+
+function getArea(shape: Shape) {
+	switch(shape.kind){
+		case("circle"):
+			return Math.PI * shape.radius * shape.radius;
+		case("square"):
+			return shape.sideLength * shape.sideLength;
+	}
+}
+```
+
+### Exhaustiveness Checks with `never`
+`never` is a special type that can be assigned to any type but no type can be assigned to `never`, except `never` itself. 
+
+This means you can use type narrowing and rely on `never` turning up to do exhaustive checking in a switch statement.
+
+The compiler will complain if there is a case we didn't handle and it's now being assigned to `never`.
+
+```TS
+function getArea(shape: Shape) {
+	switch(shape.kind){
+		case("circle"):
+			return Math.PI * shape.radius * shape.radius;
+		case("square"):
+			return shape.sideLength * shape.sideLength;
+		default:
+			// We should never get here if we handled all cases correctly
+			const _exhaustiveCheck: never = shape;
+			return _exhaustiveCheck;
+	}
+}
+```
+
+## Type Declarations
+Type declaration files end in `.d.ts` and contain only type information that TypeScript can use to enforce type rules on our code. They don't produce `.js` outputs.
+
+For example, TypeScript knows about `console` and all its methods because there is a `Console` interface defined in `lib.dom.d.ts`.
+
+### Working with Third-Party Libraries
+Increasingly, third-party libraries, such as Axios, will include their own TypeScript type declaration files.
+
+In their `package.json`, they will have a `types` and/or `typings` property pointing to their type declaration files.
+
+You can define a custom type using a Type Alias or Interface.
+
+```TS
+import axios from "axios";
+
+interface User {
+	id: number;
+	name: string;
+	username: string;
+	email: string;
+	address: {
+		street: string;
+		suite: string;
+		city: string;
+		zipcode: string;
+		geo: {
+			lat: string;
+			long: string;	
+		} 	
+	}; 
+	phone: string;
+	website: string;
+	company: {
+		name: string;
+		catchPhrase: string;
+		bs: string;
+	}
+}
+
+axios
+	.get<User>("https://jsonplaceholder.typicode.com/users/1")
+	.then((res) => {
+		const { data } = res;
+		printUser(data);
+	})
+	.catch((e) => {
+		console.log("Error", e)
+	});
+
+
+function printUser(user: User) {
+	console.log(`${user.name} ${user.email} ${user.phone}`)
+}
+```
+
+### Installing Types Seperately
+Some libraries, such as Lodash, do not come with a type declaration file. But the most popular libraries do have type declaration files that have been written for them. The [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped) is particularly popular.
+
+You have to install these seperately, which will make an `index.d.ts` file available.
+
+```
+npm install --save-dev @types/lodash
+```
+
+You can use https://www.typescriptlang.org/dt/search to search for type declaration files.
+
+## Modules
+The JavaScript module system remains kind of a fractured landscape.
+
+TypeScript supports modules and lets us control the output it generates (CommonJS or ES Modules).
+
+TypeScript technically has a proprietary module format called namespaces but most of its features are offered by ES Modules and the docs recommend just using ES Modules.
+
+### Working Without Modules
+The JavaScript specification declares that any JavaScript files without an `export` or top-level `await` should be considered a script, not a module.
+
+Inside a script, any variables and types are declared to be in the shared global scope.
+
+### Using TypeScript Modules
+Any JavaScript file with an `export`, or top-level `await`, is considered a module. Each module is treted as its own namespace, and you will need to manually import and export any functionality you want to share.
+
+Import statements can't use `.ts`, since the code will be compiled to JavaScript. So for a `utils` module, import it using `import { add } from "utils"`.
+
+### Changing Compilation Module System
+JavaScript in the browser doesn't understand CommonJS syntax.
+
+You can configure TypeScript to use a different module system by updating the `module` property in your `tsconfig.json`.
+
+```json
+"module": "ES6"
+```
+
+To make modules work in the browser, you also need to specify `type="module"` when including your script.
+
+```HTML
+<script type="module" src="./dist/index.js"></script>
+```
+
+### Importing Types
+Import statements that are purely for types won't be included in the compiled JavaScript. Export statements will be empty.
+
+```TS
+// types.ts
+export interface Person {
+	username: string;
+	email: string;
+}
+
+export type Color = "red" | "green" | "blue";
+
+// types.js
+export {};
+```
+
+Babel can have issues importing types. TypeScript 3.8 added a new syntax to clarify import statements. 
+
+```TS
+import type { Person } from "types.js";
+// or
+import { type Person, otherThing } from "types.js";
+```
+
+## Webpack and TypeScript
+Webpack helps us bundle assets into a single script to keep complex code organized while cutting down on the number of HTTP requests our web app needs to make.
+
+In order to use Webpack from the command line or call it from within `package.json`, you also need webpack-cli.
+
+It's a good practice to include TypeScript in your `package.json` to specify what version you're working with.
+
+ts-loader acts as a middleman between TypeScript and Webpack. It compiles TypeScript to JavaScript and then hands it over to Webpack for bundling.
+
+### Configuring Webpack
+The basic Webpack config for TypeScript tells Webpack to enter through `./index.ts`, load all `.ts` and `.tsx` files through the `ts-loader`, and output a `bundle.js` file in our current directory.
+
+```js
+const path = require("path");
+
+module.exports = {
+  entry: "./src/index.ts",
+  devtool: "inline-source-map",
+  devServer: {
+    static: {
+      directory: path.join(__dirname, "./")
+    }
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/
+      }
+    ]
+  },
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"]
+  },
+  output: {
+    filename: "bundle.js",
+    path: path.resolve(__dirname, "dist"),
+    publicPath: "/dist"
+  }
+};
+```
+
+Then add a `"build": "webpack"` script to your `package.json`.
+
+Webpack will get confused if the imports in your TypeScript files use `.js` extensions, so you should omit them. For example, `import Dog from "./Dog";`.
+
+To make sense of the bundle, you  will want to set `sourceMap` to true in `tsconfig.json`.
+
+The Webpack dev server acts as a live server, handles the bundling behind the scenes, and does it in memory instead of writing a seperate bundle file to disk every single time.
+
+You could set up a common Webpack config file, a development config file and a production config file.
+
+It's common to introduce a hash into the bundle filename to help the browser with caching, such as `filename: "[contenthash].bundle.js"`. This will lave multiple bundles in the dist directory, which can be countered using the `clean-webpack-plugin`.
+
+## TypeScript and React
+You can manually add type definitions to a React project. Create React App also has an option to create a new project with TypeScript.
+
+```
+npx create-react-app APP_NAME --template typescript
+```
+
+You can also add TypeScript to an existing Create React App project by insatlling the necessary packages and changing file extensions to `.tsx`.
+
+```
+npm install --save typescript @types/node @types/react @types/react-dom @types/jest
+```
+
+TSX is the TypeScript flavour of JSX. TypeScript can infer the return type of React function components but you can also specify that their return type is `JSX.Element`. 
+
+There isn't a lot of official documentation on React and TypeScript but there is  [React+TypeScript Cheatsheets](https://github.com/typescript-cheatsheets/react#reacttypescript-cheatsheets). It is opinionated but a good resource.
+
+### Props with TypeScript
+Just like any function, you can type the parameter of a React function component. In other words, you can type props.
+
+```TS
+function Greeter(props: { person: string }): JSX.Element {
+  return <h1>Hello, { props.person }</h1>;
+}
+```
+
+For more complex props objects, you can create a seperate type or interface for props. This works with destructured props too.
+
+```TS
+interface GreeterProps {
+  person: string;
+}
+
+// with regular props
+function Greeter(props: GreeterProps): JSX.Element {
+  return <h1>Hello, { props.person }</h1>;
+}
+
+// with destructured props
+function Greeter({ person }: GreeterProps): JSX.Element {
+  return <h1>Hello, { person }</h1>;
+}
+```
+
+Hooks can be typed with the value they should return. For example, `useState` needs to know the type of the state it will be managing.
+
+```TS
+export default interface Item {
+  id: number;
+  product: string;
+  quantity: number;
+}
+
+const [items, setItems] = useState<Item[]>([]);
+```
+
+Types can be stored in a `/models` directory, or in a `models.ts` file in the same directory as the component.
+
+With the `useRef` hook, provide only the type element as an argument and use `null` as the initial value.
+
+```TS
+const inputRef = useRef<HTMLInputElement>(null);
+```
+
+For example, you can access an input's value using `inputRef.current!.value`.
+
